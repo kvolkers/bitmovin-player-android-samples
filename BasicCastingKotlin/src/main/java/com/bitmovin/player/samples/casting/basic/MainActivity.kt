@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.TextView
+import com.bitmovin.player.api.Player
 import com.bitmovin.player.casting.BitmovinCastManager
 import com.bitmovin.player.samples.casting.basic.databinding.ActivityMainBinding
 import com.google.android.gms.cast.framework.CastButtonFactory
@@ -46,10 +47,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onListItemClicked(item: ListItem) {
-        val playerIntent = Intent(this, PlayerActivity::class.java)
-        playerIntent.putExtra(SOURCE_URL, item.url)
-        playerIntent.putExtra(SOURCE_TITLE, item.title)
-        startActivity(playerIntent)
+        //        val playerIntent = Intent(this, PlayerActivity::class.java)
+        //        playerIntent.putExtra(SOURCE_URL, item.url)
+        //        playerIntent.putExtra(SOURCE_TITLE, item.title)
+        //        startActivity(playerIntent)
+        Player.create(this)
     }
 
     private fun getExampleListItems(): List<ListItem> = listOf(
