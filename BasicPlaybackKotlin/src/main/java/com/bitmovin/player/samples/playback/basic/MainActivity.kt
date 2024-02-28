@@ -7,8 +7,14 @@ import com.bitmovin.player.api.Player
 import com.bitmovin.player.api.analytics.AnalyticsPlayerConfig
 import com.bitmovin.player.api.source.SourceConfig
 import com.bitmovin.player.samples.playback.basic.databinding.ActivityMainBinding
+import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
-private const val Sintel = "https://bitdash-a.akamaihd.net/content/sintel/sintel.mpd"
+private const val TEST_MANIFEST = "<test-manifest>"
 
 class MainActivity : AppCompatActivity() {
 
@@ -49,14 +55,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initializePlayer() {
-        val analyticsKey = "{ANALYTICS_LICENSE_KEY}"
         player = Player(
             context = this,
-            analyticsConfig = AnalyticsPlayerConfig.Enabled(AnalyticsConfig(analyticsKey)),
         ).also {
             binding.playerView.player = it
         }
 
-        player.load(SourceConfig.fromUrl(Sintel))
+        val now = Date()
+        val oneMinuteAgo = Date(now.time - 60000)
+        val oneMinuteLater = Date(now.time + 60000)
+
+        val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
+        val formattedOneMinuteAgo = formatter.format(oneMinuteAgo)
+        val formattedOneMinuteLater = formatter.format(oneMinuteLater)
+
+        val url = "$TEST_MANIFEST?t=$formattedOneMinuteAgo-$formattedOneMinuteLater"
+
+        player.load(SourceConfig.fromUrl(url))
+        player.play()
     }
 }
