@@ -1,10 +1,13 @@
 package com.bitmovin.player.samples.playback.basic
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.bitmovin.analytics.api.AnalyticsConfig
 import com.bitmovin.player.api.Player
 import com.bitmovin.player.api.analytics.AnalyticsPlayerConfig
+import com.bitmovin.player.api.event.PlayerEvent
+import com.bitmovin.player.api.event.on
 import com.bitmovin.player.api.source.SourceConfig
 import com.bitmovin.player.samples.playback.basic.databinding.ActivityMainBinding
 import java.text.SimpleDateFormat
@@ -59,6 +62,12 @@ class MainActivity : AppCompatActivity() {
             context = this,
         ).also {
             binding.playerView.player = it
+        }
+        player.on<PlayerEvent.TimeChanged> {
+            Log.d(
+                javaClass.simpleName,
+                "progress ${player.currentTime}/${player.duration} ${player.timeShift}/${player.maxTimeShift}"
+            )
         }
 
         val now = Date()
