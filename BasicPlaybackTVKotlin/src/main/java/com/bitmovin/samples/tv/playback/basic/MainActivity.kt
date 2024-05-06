@@ -5,11 +5,14 @@ import android.util.Log
 import android.view.KeyEvent
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
-import com.bitmovin.analytics.api.AnalyticsConfig
 import com.bitmovin.player.PlayerView
 import com.bitmovin.player.api.PlaybackConfig
 import com.bitmovin.player.api.Player
 import com.bitmovin.player.api.PlayerConfig
+import com.bitmovin.player.api.advertising.AdItem
+import com.bitmovin.player.api.advertising.AdSource
+import com.bitmovin.player.api.advertising.AdSourceType
+import com.bitmovin.player.api.advertising.AdvertisingConfig
 import com.bitmovin.player.api.analytics.AnalyticsPlayerConfig
 import com.bitmovin.player.api.deficiency.ErrorEvent
 import com.bitmovin.player.api.event.PlayerEvent
@@ -21,10 +24,13 @@ import com.bitmovin.player.api.ui.PlayerViewConfig
 import com.bitmovin.player.api.ui.UiConfig
 import com.bitmovin.player.samples.tv.playback.basic.R
 import com.bitmovin.player.samples.tv.playback.basic.databinding.ActivityMainBinding
+import com.google.ads.interactivemedia.v3.api.AdEvent
 
 private const val SEEKING_OFFSET = 10
 private val TAG = MainActivity::class.java.simpleName
 
+private const val AD_SOURCE =
+    "https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/vmap_ad_samples&sz=640x480&cust_params=sample_ar%3Dpremidpostlongpod&ciu_szs=300x250&gdfp_req=1&ad_rule=1&output=vmap&unviewed_position_start=1&env=vp&impl=s&cmsid=496&vid=short_onecue&correlator="
 
 class MainActivity : AppCompatActivity() {
     private lateinit var playerView: PlayerView
@@ -43,15 +49,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initializePlayer() {
-        // Initialize PlayerView from layout and attach a new Player instance
-        val analyticsKey = "{ANALYTICS_LICENSE_KEY}"
+        val advertisingConfig = AdvertisingConfig(
+            listOf(AdItem(AdSource(AdSourceType.Ima, AD_SOURCE))),
+            adsManagerAvailableCallback = { adsManager ->
+                adsManager.addAdEventListener {
+                    if (it.type == AdEvent.AdEventType.AD_BREAK_READY) {
+                        player.play()
+                    }
+                }
+            }
+        )
+
+        val playerConfig = PlayerConfig(
+            advertisingConfig = advertisingConfig,
+            playbackConfig = PlaybackConfig(isAutoplayEnabled = false),
+        )
+
+        // Create new Player with our PlayerConfig
 
         player = Player(
             this,
-            PlayerConfig(
-                playbackConfig = PlaybackConfig(isAutoplayEnabled = true)
-            ),
-            AnalyticsPlayerConfig.Enabled(AnalyticsConfig(analyticsKey)),
+            playerConfig,
+            AnalyticsPlayerConfig.Disabled,
         )
 
         playerView = PlayerView(
@@ -75,7 +94,8 @@ class MainActivity : AppCompatActivity() {
         binding.playerRootLayout.addView(playerView, 0)
 
         // Create a new SourceConfig. In this case we are loading a DASH source.
-        val sourceURL = "https://bitmovin-a.akamaihd.net/content/MI201109210084_1/mpds/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.mpd"
+        val sourceURL =
+            "https://bitmovin-a.akamaihd.net/content/MI201109210084_1/mpds/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.mpd"
 
         player.load(SourceConfig(sourceURL, SourceType.Dash))
     }
@@ -110,12 +130,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        // This method is called on key down and key up, so avoid being called twice
-        if (event.action == KeyEvent.ACTION_DOWN) {
-            if (handleUserInput(event.keyCode)) {
-                return true
-            }
-        }
+        //        // This method is called on key down and key up, so avoid being called twice
+        //        if (event.action == KeyEvent.ACTION_DOWN) {
+        //            if (handleUserInput(event.keyCode)) {
+        //                return true
+        //            }
+        //        }
 
         // Make sure to return super.dispatchKeyEvent(event) so that any key not handled yet will work as expected
         return super.dispatchKeyEvent(event)
@@ -132,28 +152,34 @@ class MainActivity : AppCompatActivity() {
                 player.togglePlay()
                 true
             }
+
             KeyEvent.KEYCODE_MEDIA_PLAY -> {
                 player.play()
                 true
             }
+
             KeyEvent.KEYCODE_MEDIA_PAUSE -> {
                 player.pause()
                 true
             }
+
             KeyEvent.KEYCODE_MEDIA_STOP -> {
                 player.stopPlayback()
                 true
             }
+
             KeyEvent.KEYCODE_DPAD_RIGHT,
             KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> {
                 player.seekForward()
                 true
             }
+
             KeyEvent.KEYCODE_DPAD_LEFT,
             KeyEvent.KEYCODE_MEDIA_REWIND -> {
                 player.seekBackward()
                 true
             }
+
             else -> return false
         }
     }
