@@ -2,8 +2,9 @@ package com.bitmovin.player.samples.ads.ima
 
 import android.os.Bundle
 import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.bitmovin.analytics.api.AnalyticsConfig
+import androidx.core.view.postDelayed
 import com.bitmovin.player.PlayerView
 import com.bitmovin.player.api.Player
 import com.bitmovin.player.api.PlayerConfig
@@ -20,6 +21,7 @@ private const val AD_SOURCE_1 = "https://pubads.g.doubleclick.net/gampad/ads?sz=
 private const val AD_SOURCE_2 = "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dlinear&correlator="
 private const val AD_SOURCE_3 = "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dskippablelinear&correlator="
 private const val AD_SOURCE_4 = "https://pubads.g.doubleclick.net/gampad/ads?sz=640x480&iu=/124319096/external/single_ad_samples&ciu_szs=300x250&impl=s&gdfp_req=1&env=vp&output=vast&unviewed_position_start=1&cust_params=deployment%3Ddevsite%26sample_ct%3Dredirectlinear&correlator="
+private const val AD_PRE_MID_POST = "https://pubads.g.doubleclick.net/gampad/ads?iu=/21775744923/external/vmap_ad_samples&sz=640x480&cust_params=sample_ar%3Dpremidpostpod&ciu_szs=300x250&gdfp_req=1&ad_rule=1&output=vmap&unviewed_position_start=1&env=vp&impl=s&cmsid=496&vid=short_onecue&correlator="
 
 class MainActivity : AppCompatActivity() {
     private lateinit var playerView: PlayerView
@@ -50,14 +52,16 @@ class MainActivity : AppCompatActivity() {
         val advertisingConfig = AdvertisingConfig(preRoll, midRoll, postRoll)
 
         // Create a new PlayerConfig containing the advertising config. Ads in the AdvertisingConfig will be scheduled automatically.
-        val playerConfig = PlayerConfig(advertisingConfig = advertisingConfig)
+        //        val playerConfig = PlayerConfig(advertisingConfig = advertisingConfig)
+        val playerConfig = PlayerConfig()
 
         // Create new Player with our PlayerConfig
         val analyticsKey = "{ANALYTICS_LICENSE_KEY}"
         val player = Player(
             this,
             playerConfig,
-            AnalyticsPlayerConfig.Enabled(AnalyticsConfig(analyticsKey)),
+            //            AnalyticsPlayerConfig.Enabled(AnalyticsConfig(analyticsKey)),
+            AnalyticsPlayerConfig.Disabled,
         )
         playerView = PlayerView(this, player).apply {
             layoutParams = LinearLayout.LayoutParams(
@@ -67,9 +71,18 @@ class MainActivity : AppCompatActivity() {
         }
         playerView.keepScreenOn = true
         player.load(SourceConfig.fromUrl("https://bitdash-a.akamaihd.net/content/sintel/sintel.mpd"))
+        player.scheduleAd(AdItem(AdSource(AdSourceType.Ima, AD_PRE_MID_POST)))
+        player.play()
 
         // Add PlayerView to the layout
         binding.root.addView(playerView, 0)
+
+        binding.root.postDelayed(20_000) {
+            Toast.makeText(this, "Loading 2nd item", Toast.LENGTH_SHORT).show()
+            player.load(SourceConfig.fromUrl("https://bitdash-a.akamaihd.net/content/sintel/sintel.mpd"))
+            player.scheduleAd(AdItem(AdSource(AdSourceType.Ima, AD_PRE_MID_POST)))
+            player.play()
+        }
     }
 
     override fun onStart() {
